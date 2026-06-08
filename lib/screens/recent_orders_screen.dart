@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:mobileframe/services/hive_service.dart';
 import '../models/item.dart';
 import '../models/order.dart';
 import '../services/warframe_api.dart';
 
 class RecentOrdersScreen extends StatefulWidget {
   final WarframeApi api;
+  final Box box;
 
-  const RecentOrdersScreen({required this.api, super.key});
+  const RecentOrdersScreen({required this.api, required this.box, super.key});
 
   @override
   State<RecentOrdersScreen> createState() => _RecentOrdersScreenState();
@@ -28,16 +31,26 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final results = await Future.wait([
-        widget.api.getRecentOrders(),
-        widget.api.getAllItems(),
-      ]);
-      final orders = results[0] as List<Order>;
-      final items = results[1] as List<Item>;
+      // no reason to cache recent items; wouldnt be recent would it
+      final orders = await widget.api.getRecentOrders();
+      List<Item> items;
+
+      final cached = HiveService.getCachedItems(widget.box);
+      if (cached != null) {
+        items = cached.map((j) => Item.fromJson(j)).toList();
+      } else {
+        items = await widget.api.getAllItems();
+        HiveService.cacheItems(
+          widget.box,
+          items.map((i) => i.toJson()).toList()
+        );
+      }
+
       final map = <String, Item>{};
       for (final item in items) {
         map[item.id] = item;
       }
+
       if (!mounted) return;
       setState(() {
         _orders = orders;
