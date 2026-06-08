@@ -1,0 +1,235 @@
+import 'package:flutter/material.dart';
+import '../models/item.dart';
+import '../models/order.dart';
+import '../services/warframe_api.dart';
+
+class RecentOrdersScreen extends StatefulWidget {
+  final WarframeApi api;
+
+  const RecentOrdersScreen({required this.api, super.key});
+
+  @override
+  State<RecentOrdersScreen> createState() => _RecentOrdersScreenState();
+}
+
+// recent orders page
+class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
+  List<Order>? _orders;
+  Map<String, Item> _itemMap = {};
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final results = await Future.wait([
+        widget.api.getRecentOrders(),
+        widget.api.getAllItems(),
+      ]);
+      final orders = results[0] as List<Order>;
+      final items = results[1] as List<Item>;
+      final map = <String, Item>{};
+      for (final item in items) {
+        map[item.id] = item;
+      }
+      if (!mounted) return;
+      setState(() {
+        _orders = orders;
+        _itemMap = map;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recent Orders'),
+        centerTitle: true,
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    final orders = _orders!;
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        itemCount: orders.length,
+        itemBuilder: (context, index) => _OrderCard(
+          order: orders[index],
+          item: _itemMap[orders[index].itemId],
+        ),
+      ),
+    );
+  }
+}
+
+// cards for specific orders
+class _OrderCard extends StatelessWidget {
+  final Order order;
+  final Item? item;
+
+  const _OrderCard({required this.order, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isSell = order.type == 'sell';
+    final chipColor = isSell ? Colors.green : Colors.red;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            ClipRRect(
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: item?.thumb != null
+                    ? Image.network(
+                  WarframeApi.imageUrl(item!.thumb!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(Icons.inventory),
+                )
+                    : const Icon(Icons.inventory),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item?.name ?? 'Unknown Item',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        isSell ? 'WTS' : 'WTB',
+                        style: TextStyle(
+                          color: chipColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${order.platinum}p',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      if (order.quantity > 1) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'x${order.quantity}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  order.user.ingameName,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                _StatusDot(status: order.user.status),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// show status of the user, cant trade when offline
+class _StatusDot extends StatelessWidget {
+  final String status;
+
+  const _StatusDot({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (status) {
+      case 'ingame':
+        color = Colors.green;
+        break;
+      case 'online':
+        color = Colors.lightBlue;
+        break;
+      default:
+        color = Colors.grey;
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          status,
+          style: TextStyle(fontSize: 11, color: color),
+        ),
+      ],
+    );
+  }
+}

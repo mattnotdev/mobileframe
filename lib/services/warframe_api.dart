@@ -1,0 +1,63 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../models/item.dart';
+import '../models/order.dart';
+
+// most, if not all api calls will happen here
+class WarframeApi {
+  static const _base = 'https://api.warframe.market/v2';
+  static const _imageBase = 'https://warframe.market/static/assets/';
+
+  final String language;
+  final String platform;
+
+  WarframeApi({this.language = 'en', this.platform = 'pc'});
+
+  Map<String, String> get _headers => {
+    'Language': language,
+    'Platform': platform,
+    'Accept': 'application/json',
+  };
+
+  static String imageUrl(String path) => '$_imageBase$path';
+
+  Future<List<Order>> getRecentOrders() async {
+    final res = await http.get(
+      Uri.parse('$_base/orders/recent'),
+      headers: _headers,
+    );
+    _checkError(res);
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    final data = body['data'] as List;
+    return data.map((j) => Order.fromJson(j)).toList();
+  }
+
+  Future<List<Item>> getAllItems() async {
+    final res = await http.get(
+      Uri.parse('$_base/items'),
+      headers: _headers,
+    );
+    _checkError(res);
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    final data = body['data'] as List;
+    return data.map((j) => Item.fromJson(j)).toList();
+  }
+
+  void _checkError(http.Response res) {
+    if (res.statusCode != 200) {
+      throw ApiException(res.statusCode, res.body);
+    }
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    if (body['error'] != null) {
+      throw ApiException(res.statusCode, body['error'] as String);
+    }
+  }
+}
+
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  ApiException(this.statusCode, this.message);
+  @override
+  String toString() => 'API $statusCode: $message';
+}
