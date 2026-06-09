@@ -9,6 +9,13 @@ class HiveService {
     box.put('items_cached_at', DateTime.now().toIso8601String());
   }
 
+  static void cacheItemDetail(Box box, String slug, Map<String, dynamic> itemJson) {
+    box.put('detail_$slug', jsonEncode({
+      'data': itemJson,
+      'cachedAt': DateTime.now().toIso8601String(),
+    }));
+  }
+
   // items database will attempt to recache every few hours
   // realistically this period could be longer bcs the game doesn't update often
   // but it doesnt hurt i suppose
@@ -22,5 +29,15 @@ class HiveService {
 
     final decoded = jsonDecode(raw as String);
     return (decoded as List).cast<Map<String, dynamic>>();
+  }
+
+  static Map<String, dynamic>? getCachedItemDetail(Box box, String slug, {Duration ttl = const Duration(hours: 12)}) {
+    final raw = box.get('detail_$slug');
+    if (raw == null) return null;
+
+    final entry = jsonDecode(raw as String) as Map<String, dynamic>;
+    final cachedAt = DateTime.parse(entry['cachedAt'] as String);
+    if (DateTime.now().difference(cachedAt) > ttl) return null;
+    return entry['data'] as Map<String, dynamic>;
   }
 }

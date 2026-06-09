@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:mobileframe/services/hive_service.dart';
 import '../models/item.dart';
 import '../models/item_full.dart';
 import '../models/order.dart';
@@ -37,14 +38,42 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final results = await Future.wait([
-        widget.api.getItemDetail(widget.item.slug),
-        widget.api.getItemOrders(widget.item.id),
-      ]);
+      // like with recents, orders should always be updated
+      final ordersFuture = widget.api.getItemOrders(widget.item.id);
+
+      ItemFull detail;
+      final cached = HiveService.getCachedItemDetail(widget.box, widget.item.slug);
+      if (cached != null) {
+        detail = ItemFull.fromJson(cached);
+      } else {
+        // save details for future use
+        detail = await widget.api.getItemDetail(widget.item.slug);
+        HiveService.cacheItemDetail(widget.box, widget.item.slug, {
+          'id': detail.id,
+          'slug': detail.slug,
+          'tags': detail.tags,
+          'rarity': detail.rarity,
+          'maxRank': detail.maxRank,
+          'tradingTax': detail.tradingTax,
+          'tradable': detail.tradable,
+          'i18n': {
+            'en': {
+              'name': detail.name,
+              'description': detail.description,
+              'icon': detail.icon,
+              'thumb': detail.thumb,
+              'wikiLink': detail.wikiLink,
+            },
+          },
+        });
+      }
+
+      final orders = await ordersFuture;
+
       if (!mounted) return;
       setState(() {
-        _detail = results[0] as ItemFull;
-        _orders = results[1] as List<Order>;
+        _detail = detail;
+        _orders = orders;
         _loading = false;
         _error = null;
       });
