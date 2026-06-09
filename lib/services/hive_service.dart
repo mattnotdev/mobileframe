@@ -40,4 +40,31 @@ class HiveService {
     if (DateTime.now().difference(cachedAt) > ttl) return null;
     return entry['data'] as Map<String, dynamic>;
   }
+
+  static List<Map<String, dynamic>> getFollowedItems(Box box) {
+    final raw = box.get('followed', defaultValue: '[]') as String;
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+  }
+
+  static void _setFollowedItems(Box box, List<Map<String, dynamic>> items) {
+    box.put('followed', jsonEncode(items));
+  }
+
+  static bool toggleFollow(Box box, Map<String, dynamic> item) {
+    final list = getFollowedItems(box);
+    final idx = list.indexWhere((e) => e['id'] == item['id']);
+    if (idx >= 0) {
+      list.removeAt(idx);
+      _setFollowedItems(box, list);
+      return false;
+    }
+    list.add(item);
+    _setFollowedItems(box, list);
+    return true;
+  }
+
+  static bool isFollowed(Box box, String itemId) {
+    return getFollowedItems(box).any((e) => e['id'] == itemId);
+  }
+
 }

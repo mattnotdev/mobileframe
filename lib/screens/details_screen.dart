@@ -28,10 +28,12 @@ class _DetailScreenState extends State<DetailScreen> {
   List<Order> _orders = [];
   bool _loading = true;
   String? _error;
+  bool? _isFollowed;
 
   @override
   void initState() {
     super.initState();
+    _isFollowed = HiveService.isFollowed(widget.box, widget.item.id);
     _load();
   }
 
@@ -102,6 +104,20 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  void _toggleFollow() {
+    setState(() {
+      _isFollowed = HiveService.toggleFollow(
+        widget.box,
+        {
+          'id': widget.item.id,
+          'slug': widget.item.slug,
+          'name': widget.item.name,
+          'thumb': widget.item.thumb,
+        },
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,10 +125,13 @@ class _DetailScreenState extends State<DetailScreen> {
         title: Text(widget.item.name),
         actions: [
           IconButton(
-            onPressed: () {
-              debugPrint('attempting to follow item ${widget.item.name}');
-            },
-            icon: Icon(Icons.star),
+            onPressed: _toggleFollow,
+            icon: Icon(
+              _isFollowed == true
+                ? Icons.star
+                : Icons.star_border,
+              color: _isFollowed == true ? Colors.amber : null,
+            ),
           ),
         ],
       ),

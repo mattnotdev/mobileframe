@@ -3,6 +3,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../services/warframe_api.dart';
 import 'recent_orders_screen.dart';
 import 'search_screen.dart';
+import 'followed_screen.dart';
 
 class HomeShell extends StatefulWidget {
   final WarframeApi api;
@@ -16,6 +17,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _page = 0;
+  int _followedVisits = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +27,19 @@ class _HomeShellState extends State<HomeShell> {
         children: [
           RecentOrdersScreen(api: widget.api, box: widget.box),
           SearchScreen(api: widget.api, box: widget.box),
+          FollowedScreen(
+            api: widget.api,
+            box: widget.box,
+            key: ValueKey('followed_$_followedVisits')
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _page,
-        onDestinationSelected: (i) => setState(() => _page = i),
+        onDestinationSelected: (i) {
+          if (i == 2) _followedVisits++;
+          setState(() => _page = i);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.history),
@@ -41,6 +51,9 @@ class _HomeShellState extends State<HomeShell> {
             selectedIcon: Icon(Icons.search),
             label: 'Search',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.star),
+            label: 'Followed')
         ],
       ),
     );

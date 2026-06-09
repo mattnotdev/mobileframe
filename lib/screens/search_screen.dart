@@ -35,17 +35,30 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _loadItems() {
+  void _loadItems() async {
     final cached = HiveService.getCachedItems(widget.box);
-    if (cached == null) {
-      setState(() => _loading = false);
+    if (cached != null) {
+      setState(() {
+        _allItems = cached.map((j) => Item.fromJson(j)).toList();
+        _filteredItems = _allItems;
+        _loading = false;
+      });
       return;
     }
-    setState(() {
-      _allItems = cached.map((j) => Item.fromJson(j)).toList();
-      _filteredItems = _allItems;
-      _loading = false;
-    });
+    try {
+      final items = await widget.api.getAllItems();
+      HiveService.cacheItems(
+        widget.box,
+        items.map((i) => i.toJson()).toList(),
+      );
+      setState(() {
+        _allItems = items;
+        _filteredItems = items;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+    }
   }
 
   void _filter() {
