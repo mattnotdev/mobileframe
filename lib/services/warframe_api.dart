@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:async';
 import '../models/item.dart';
 import '../models/item_full.dart';
 import '../models/order.dart';
@@ -26,7 +27,7 @@ class WarframeApi {
     final res = await http.get(
       Uri.parse('$_base/orders/recent'),
       headers: _headers,
-    );
+    ).timeout(const Duration(seconds:8));
     _checkError(res);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List;
@@ -37,7 +38,7 @@ class WarframeApi {
     final res = await http.get(
       Uri.parse('$_base/items'),
       headers: _headers,
-    );
+    ).timeout(const Duration(seconds:8));
     _checkError(res);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List;
@@ -48,7 +49,7 @@ class WarframeApi {
     final res = await http.get(
       Uri.parse('$_base/items/$slug'),
       headers: _headers,
-    );
+    ).timeout(const Duration(seconds:8));
     _checkError(res);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return ItemFull.fromJson(body['data'] as Map<String, dynamic>);
@@ -58,7 +59,7 @@ class WarframeApi {
     final res = await http.get(
       Uri.parse('$_base/orders/item/$itemId'),
       headers: _headers,
-    );
+    ).timeout(const Duration(seconds:8));
     _checkError(res);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List;
