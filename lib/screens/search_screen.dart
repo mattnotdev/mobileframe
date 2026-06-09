@@ -3,6 +3,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/item.dart';
 import '../services/hive_service.dart';
 import '../services/warframe_api.dart';
+import 'details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final WarframeApi api;
@@ -119,6 +120,16 @@ class _SearchScreenState extends State<SearchScreen> {
       itemCount: _filteredItems.length,
       itemBuilder: (context, index) => _SearchResultTile(
         item: _filteredItems[index],
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailScreen(
+              api: widget.api,
+              box: widget.box,
+              item: _filteredItems[index],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -126,8 +137,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
 class _SearchResultTile extends StatelessWidget {
   final Item item;
+  final VoidCallback? onTap;
 
-  const _SearchResultTile({required this.item});
+  const _SearchResultTile({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +148,7 @@ class _SearchResultTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          debugPrint('Tapped: ${item.slug}');
-        },
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Row(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/item.dart';
+import '../models/item_full.dart';
 import '../models/order.dart';
 
 // most, if not all api calls will happen here
@@ -41,6 +42,27 @@ class WarframeApi {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List;
     return data.map((j) => Item.fromJson(j)).toList();
+  }
+
+  Future<ItemFull> getItemDetail(String slug) async {
+    final res = await http.get(
+      Uri.parse('$_base/items/$slug'),
+      headers: _headers,
+    );
+    _checkError(res);
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return ItemFull.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  Future<List<Order>> getItemOrders(String itemId) async {
+    final res = await http.get(
+      Uri.parse('$_base/orders/item/$itemId'),
+      headers: _headers,
+    );
+    _checkError(res);
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    final data = body['data'] as List;
+    return data.map((j) => Order.fromJson(j)).toList();
   }
 
   void _checkError(http.Response res) {

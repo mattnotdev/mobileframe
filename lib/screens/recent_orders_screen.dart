@@ -3,6 +3,8 @@ import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:mobileframe/services/hive_service.dart';
 import '../models/item.dart';
 import '../models/order.dart';
+import 'details_screen.dart';
+import '../widgets/status_dot.dart';
 import '../services/warframe_api.dart';
 
 class RecentOrdersScreen extends StatefulWidget {
@@ -104,10 +106,26 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         itemCount: orders.length,
-        itemBuilder: (context, index) => _OrderCard(
-          order: orders[index],
-          item: _itemMap[orders[index].itemId],
-        ),
+        itemBuilder: (context, index) {
+          final order = orders[index];
+          final item = _itemMap[order.itemId];
+          return _OrderCard(
+            order: order,
+            item: item,
+            onTap: item != null
+                ? () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DetailScreen(
+                  api: widget.api,
+                  box: widget.box,
+                  item: item,
+                ),
+              ),
+            )
+                : null,
+          );
+        },
       ),
     );
   }
@@ -117,8 +135,9 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
 class _OrderCard extends StatelessWidget {
   final Order order;
   final Item? item;
+  final VoidCallback? onTap;
 
-  const _OrderCard({required this.order, required this.item});
+  const _OrderCard({required this.order, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -128,121 +147,88 @@ class _OrderCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            ClipRRect(
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: item?.thumb != null
-                    ? Image.network(
-                  WarframeApi.imageUrl(item!.thumb!),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const Icon(Icons.inventory),
-                )
-                    : const Icon(Icons.inventory),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: item?.thumb != null
+                      ? Image.network(
+                    WarframeApi.imageUrl(item!.thumb!),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Icon(Icons.inventory),
+                  )
+                      : const Icon(Icons.inventory),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item?.name ?? 'Unknown Item',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item?.name ?? 'Unknown Item',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        isSell ? 'WTS' : 'WTB',
-                        style: TextStyle(
-                          color: chipColor,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          isSell ? 'WTS' : 'WTB',
+                          style: TextStyle(
+                            color: chipColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${order.platinum}p',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      if (order.quantity > 1) ...[
                         const SizedBox(width: 8),
                         Text(
-                          'x${order.quantity}',
-                          style: theme.textTheme.bodySmall,
+                          '${order.platinum}p',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
+                        if (order.quantity > 1) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            'x${order.quantity}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    order.user.ingameName,
+                    style: theme.textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 4),
+                  StatusDot(status: order.user.status),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  order.user.ingameName,
-                  style: theme.textTheme.bodySmall,
-                ),
-                const SizedBox(height: 4),
-                _StatusDot(status: order.user.status),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// show status of the user, cant trade when offline
-class _StatusDot extends StatelessWidget {
-  final String status;
-
-  const _StatusDot({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    switch (status) {
-      case 'ingame':
-        color = Colors.green;
-        break;
-      case 'online':
-        color = Colors.lightBlue;
-        break;
-      default:
-        color = Colors.grey;
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+            ],
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          status,
-          style: TextStyle(fontSize: 11, color: color),
-        ),
-      ],
+      )
     );
   }
 }
+
+// moved to separate widget
+
+// class _StatusDot extends StatelessWidget {}
