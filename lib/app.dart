@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'services/warframe_api.dart';
 import 'screens/recent_orders_screen.dart';
+import 'screens/home_shell.dart';
 
 class WarframeMarketApp extends StatelessWidget {
   final WarframeApi api;
@@ -28,7 +29,7 @@ class WarframeMarketApp extends StatelessWidget {
           ),
         ),
       ),
-      home: RecentOrdersScreen(api: api, box: box),
+      home: HomeShell(api: api, box: box),
     );
   }
 }
