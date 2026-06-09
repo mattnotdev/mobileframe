@@ -105,17 +105,32 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _toggleFollow() {
-    setState(() {
-      _isFollowed = HiveService.toggleFollow(
-        widget.box,
-        {
-          'id': widget.item.id,
-          'slug': widget.item.slug,
-          'name': widget.item.name,
-          'thumb': widget.item.thumb,
-        },
+    final nowFollowed = HiveService.toggleFollow(
+      widget.box,
+      {
+        'id': widget.item.id,
+        'slug': widget.item.slug,
+        'name': widget.item.name,
+        'thumb': widget.item.thumb,
+      },
+    );
+    setState(() => _isFollowed = nowFollowed);
+
+    if (nowFollowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to followed items'),
+          duration: Duration(seconds: 2),
+        ),
       );
-    });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Removed from followed items'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override

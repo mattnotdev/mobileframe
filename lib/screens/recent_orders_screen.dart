@@ -23,6 +23,7 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
   Map<String, Item> _itemMap = {};
   bool _loading = true;
   String? _error;
+  String _orderFilter = 'all';
 
   @override
   void initState() {
@@ -69,6 +70,11 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
     }
   }
 
+  List<Order> get _filteredOrders {
+    if (_orderFilter == 'all' || _orders == null) return _orders ?? [];
+    return _orders!.where((o) => o.type == _orderFilter).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,10 +110,37 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: orders.length,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        itemCount: _filteredOrders.length + 1,
         itemBuilder: (context, index) {
-          final order = orders[index];
+          if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _FilterChip(
+                    label: 'All',
+                    selected: _orderFilter == 'all',
+                    onTap: () => setState(() => _orderFilter = 'all'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'WTS',
+                    selected: _orderFilter == 'sell',
+                    onTap: () => setState(() => _orderFilter = 'sell'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'WTB',
+                    selected: _orderFilter == 'buy',
+                    onTap: () => setState(() => _orderFilter = 'buy'),
+                  ),
+                ],
+              ),
+            );
+          }
+          final order = _filteredOrders[index - 1];
           final item = _itemMap[order.itemId];
           return _OrderCard(
             order: order,
@@ -225,6 +258,44 @@ class _OrderCard extends StatelessWidget {
           ),
         ),
       )
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 }
