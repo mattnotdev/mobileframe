@@ -1,3 +1,4 @@
+// detailed info about an item, for the detail screen
 class ItemFull {
   final String id;
   final String slug;

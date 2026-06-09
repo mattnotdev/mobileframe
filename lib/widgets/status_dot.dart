@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// status indicator placed near usernames
+// cant trade with offline ppl, hence its pretty useful
 // moved from recent orders bcs its useful to have everywhere
 class StatusDot extends StatelessWidget {
   final String status;

@@ -23,6 +23,7 @@ class WarframeApi {
 
   static String imageUrl(String path) => '$_imageBase$path';
 
+  // fetches a list of all recent orders
   Future<List<Order>> getRecentOrders() async {
     final res = await http.get(
       Uri.parse('$_base/orders/recent'),
@@ -34,6 +35,8 @@ class WarframeApi {
     return data.map((j) => Order.fromJson(j)).toList();
   }
 
+  // fetches all info about items in game - even untradable ones
+  // realistically should probably filter them out but eeeeeeeeeeeh
   Future<List<Item>> getAllItems() async {
     final res = await http.get(
       Uri.parse('$_base/items'),
@@ -45,6 +48,7 @@ class WarframeApi {
     return data.map((j) => Item.fromJson(j)).toList();
   }
 
+  // detailed info about a specific item
   Future<ItemFull> getItemDetail(String slug) async {
     final res = await http.get(
       Uri.parse('$_base/items/$slug'),
@@ -55,6 +59,7 @@ class WarframeApi {
     return ItemFull.fromJson(body['data'] as Map<String, dynamic>);
   }
 
+  // how many and what orders have been placed on an item
   Future<List<Order>> getItemOrders(String itemId) async {
     final res = await http.get(
       Uri.parse('$_base/orders/item/$itemId'),
@@ -66,6 +71,7 @@ class WarframeApi {
     return data.map((j) => Order.fromJson(j)).toList();
   }
 
+  // throw errors when stuff goes bad
   void _checkError(http.Response res) {
     if (res.statusCode != 200) {
       throw ApiException(res.statusCode, res.body);

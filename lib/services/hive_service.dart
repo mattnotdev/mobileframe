@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
 
+// place where local data is being stored and read
+// hopefully works fine offline, it is difficult to debug though...
 class HiveService {
   static Future<Box> openBox() => Hive.openBox('warframe_market');
 

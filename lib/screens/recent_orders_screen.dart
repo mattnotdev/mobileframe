@@ -65,7 +65,8 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        // _error = e.toString();
+        _error = 'An error occured, check your internet connection.';
       });
     }
   }
@@ -95,8 +96,8 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-            const SizedBox(height: 12),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),

@@ -1,4 +1,4 @@
-// a buy/sell order class
+// a buy/sell order
 class Order {
   final String id;
   final String type; // wts / wtb
@@ -29,6 +29,7 @@ class Order {
     required this.itemId,
     required this.user,
   });
+
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
     id: json['id'] as String,

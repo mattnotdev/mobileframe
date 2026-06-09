@@ -5,6 +5,9 @@ import '../services/hive_service.dart';
 import '../services/warframe_api.dart';
 import 'details_screen.dart';
 
+// search screen which searches the local database for hits
+// not many details are contained on the screen here, because we're
+// just using the 'generic' item values
 class SearchScreen extends StatefulWidget {
   final WarframeApi api;
   final Box box;

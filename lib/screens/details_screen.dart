@@ -7,10 +7,11 @@ import '../models/order.dart';
 import '../services/warframe_api.dart';
 import '../widgets/status_dot.dart';
 
+// detailed screen of an item, and its orders
 class DetailScreen extends StatefulWidget {
   final WarframeApi api;
   final Box box;
-  final Item item; // lightweight item from search/recent list
+  final Item item;
 
   const DetailScreen({
     required this.api,
@@ -37,6 +38,7 @@ class _DetailScreenState extends State<DetailScreen> {
     _load();
   }
 
+  // preload stuff that's important
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -99,11 +101,13 @@ class _DetailScreenState extends State<DetailScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        // _error = e.toString(); a bit friendlier message
+        _error = 'Could not fetch item details, check your internet connection.';
       });
     }
   }
 
+  // follow item switch
   void _toggleFollow() {
     final nowFollowed = HiveService.toggleFollow(
       widget.box,
@@ -163,8 +167,8 @@ class _DetailScreenState extends State<DetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-            const SizedBox(height: 12),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),

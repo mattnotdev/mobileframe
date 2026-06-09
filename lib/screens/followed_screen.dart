@@ -5,6 +5,7 @@ import '../services/hive_service.dart';
 import '../services/warframe_api.dart';
 import 'details_screen.dart';
 
+// screen which shows all the user's tracked items
 class FollowedScreen extends StatefulWidget {
   final WarframeApi api;
   final Box box;

@@ -5,6 +5,7 @@ import 'recent_orders_screen.dart';
 import 'search_screen.dart';
 import 'followed_screen.dart';
 
+// the main 'place' of the app, every screen is handled by this
 class HomeShell extends StatefulWidget {
   final WarframeApi api;
   final Box box;
