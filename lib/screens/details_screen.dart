@@ -78,6 +78,22 @@ class _DetailScreenState extends State<DetailScreen> {
         _error = null;
       });
     } catch (e) {
+      final cachedDetail = HiveService.getCachedItemDetail(
+        widget.box, widget.item.slug, ttl: const Duration(hours: 12),
+      );
+      if (cachedDetail != null && mounted) {
+        setState(() {
+          _detail = ItemFull.fromJson(cachedDetail);
+          _orders = [];
+          _loading = false;
+          _error = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Offline — showing cached data')),
+        );
+        return;
+      }
+
       if (!mounted) return;
       setState(() {
         _loading = false;
